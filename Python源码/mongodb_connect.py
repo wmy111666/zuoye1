@@ -9,6 +9,8 @@ from pymongo import MongoClient
 HOST = '127.0.0.1'
 PORT = 27017
 DB_NAME = 'library'
+USERNAME = 'libWriter'
+PASSWORD = 'Writer@123'  # @ 在 URL 中需编码为 %40，这里用显式参数无需编码
 
 _client = None
 
@@ -17,7 +19,11 @@ def get_client():
     """获取 MongoClient 实例（单例）"""
     global _client
     if _client is None:
-        _client = MongoClient(f'mongodb://{HOST}:{PORT}')
+        _client = MongoClient(
+            host=HOST, port=PORT,
+            username=USERNAME, password=PASSWORD,
+            authSource='admin'
+        )
     return _client
 
 

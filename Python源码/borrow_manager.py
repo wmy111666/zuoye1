@@ -21,15 +21,23 @@ def borrow_book(reader_card, book_isbn, borrow_date=None):
 
 
 def return_book(reader_card, book_isbn, return_date=None):
-    """归还处理，将对应的借出记录更新为已归还"""
+    """归还处理：borrow_logs 为时间序列集合，不支持 update 普通字段，
+    故采用 deleteMany 删除在借记录 + insertOne 追加"已归还"流水。"""
     if return_date is None:
         return_date = datetime.now()
     db = get_db()
-    result = db.borrow_logs.update_many(
-        {'reader_card': reader_card, 'book_isbn': book_isbn, 'status': '借出'},
-        {'$set': {'status': '已归还', 'return_date': return_date}}
+    col = db.borrow_logs
+    dr = col.delete_many(
+        {'reader_card': reader_card, 'book_isbn': book_isbn, 'status': '借出'}
     )
-    return result.modified_count
+    col.insert_one({
+        'borrow_date': return_date,
+        'reader_card': reader_card,
+        'book_isbn': book_isbn,
+        'status': '已归还',
+        'return_date': return_date
+    })
+    return dr.deleted_count
 
 
 def query_overdue():
